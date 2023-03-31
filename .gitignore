@@ -1,3 +1,5 @@
-Data_sets
+Data_sets/
 dataSet.xlsx
 well_5.xlsx
+/Lib/
+DataWithoutNaN_columns.xlsx
