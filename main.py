@@ -9,7 +9,7 @@ data_path = "D:\Machine_learning\Data_sets\DataWithoutNaN_columns.csv"
 well_data = pd.read_csv(data_path, sep = ",")
 # well_data.info()
 # well_data = well_data.dropna(axis = 1)
-print(well_data.columns)
+# print(well_data.columns)
 feauters_start = ['AF90', 'AF30', 'AF60', 'GR', 'HCAL', 'HTEM', 'PEFZ', 'RHOZ', 'RLA3',
        'RLA4', 'SHALE']
 # # well_data.to_excel("DataWithoutNaN_columns.xlsx")
@@ -20,6 +20,7 @@ def create_data_set(data, feauters):
     y = data.poro
     X = data[feauters]
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state= 1, test_size=0.2)
+    np.savetxt('y_test', y_test, fmt='%.18e', delimiter=' ')
     return X_train, X_test, y_train, y_test
 
 
@@ -50,6 +51,7 @@ def choose_parametrs(model, index_arrey):
     return new_feature
 
 
+
 def lin_regr(X_train, X_test, y_train, y_test):
     from sklearn.linear_model import LinearRegression
     lin_regres_model = LinearRegression()
@@ -60,13 +62,38 @@ def lin_regr(X_train, X_test, y_train, y_test):
     lasso_model = Lasso(alpha=1)
     lasso_model.fit(X_test,y_test)
     lasso_prediction = lasso_model.predict(X_test)
+    # np.savetxt('lin_regres_prediction', lin_regres_prediction, fmt='%.18e', delimiter=' ')
+    # np.savetxt('lasso_prediction', lasso_prediction, fmt='%.18e', delimiter=' ')
     return lin_regres_prediction, lasso_prediction
 
 def RFR(X_train, X_test, y_train, y_test):
     from sklearn.ensemble import RandomForestRegressor
-    rfr_model = RandomForestRegressor(criterion= 'squared_error', random_state=1)
+    from sklearn.model_selection import RandomizedSearchCV
+    rfr_model = RandomForestRegressor()
     rfr_model.fit(X_train, y_train)
     rfr_predictions = rfr_model.predict(X_test)
+    n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=10)]
+    max_features = ['log2', 'sqrt']
+    max_depth = [int(x) for x in np.linspace(start=1, stop=15, num=15)]
+    min_samples_split = [int(x) for x in np.linspace(start=2, stop=50, num=10)]
+    min_samples_leaf = [int(x) for x in np.linspace(start=2, stop=50, num=10)]
+    bootstrap = [True, False]
+    parametrs = {'n_estimators': n_estimators,
+               'max_features': max_features,
+               'max_depth': max_depth,
+               'min_samples_split': min_samples_split,
+               'min_samples_leaf': min_samples_leaf,
+               'bootstrap': bootstrap}
+    rs = RandomizedSearchCV(rfr_model,
+                            parametrs,
+                            n_iter=100,
+                            cv=3,
+                            verbose=1,
+                            n_jobs=-1,
+                            random_state=0)
+    rs.fit(X_train, y_train)
+    print(rs.best_params_)
+    # np.savetxt('rfr_predictions', rfr_predictions, fmt='%.18e', delimiter=' ')
     return rfr_model, rfr_predictions
 
 def Gr_boost(X_train, X_test, y_train, y_test):
@@ -74,6 +101,7 @@ def Gr_boost(X_train, X_test, y_train, y_test):
     grb_model = GradientBoostingRegressor(random_state=1)
     grb_model.fit(X_train,y_train)
     grb_prediction = grb_model.predict(X_test)
+    # np.savetxt('grb_prediction', grb_prediction, fmt='%.18e', delimiter=' ')
     return grb_model, grb_prediction
 
 
@@ -152,6 +180,6 @@ def GradientBoost():
     quality_of_regression_model("GradientBoostingRegressor", grb_prediction, y_test)
     return
 
-Line_regression_models()
+# Line_regression_models()
 RandomForrest()
-GradientBoost()
+# GradientBoost()
